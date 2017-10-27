@@ -14,10 +14,20 @@ describe('Importing the module', function () {
     });
 });
 
-// describe('Configuration validity', function () {
-//     it('should establish connection to MongoDB', function () {
-//         expect(PanoStream._config.address).to.not.be.null;
-//         console.log(PanoStream);
-//         console.log(stream);
-//     });
-// });
+const options = {
+    address: 'localhost',
+    port: 27017,
+    username: 'user',
+    password: '123456',
+    database: 'streamableDb',
+    batchSize: 5,
+    collections: ['Cars', 'Restaurants', 'Users']
+};
+
+const stream = new PanoStream(options);
+
+describe('Configuration validity', function () {
+    it('should receive user\'s configuration', function () {
+        expect(stream._config.uri).to.equal('mongodb://user:123456@localhost:27017/streamableDb');
+    });
+});

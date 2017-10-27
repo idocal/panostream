@@ -6,10 +6,10 @@ The data is streamed with a specified fixed-size batch and stops reading from Mo
 
 ## Installation
 
-'''
+```
 git clone https://github.com/idocal/panostream.git
 npm install
-'''
+```
 
 ## Usage
 
