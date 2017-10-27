@@ -20,16 +20,7 @@ Promise.promisifyAll(MongoDB.Collection.prototype);
     }
  */
 
-let config = {
-    address: 'localhost',
-    port: 27017,
-    username: 'user',
-    password: '123456',
-    database: 'streamableDb',
-    batchSize: 5,
-    collections: ['Cars', 'Restaurants', 'Users'],
-    uri: 'mongodb://user:123456@localhost:27017/streamableDb'
-};
+let config = {};
 
 // Describes the current stream variables
 const state = {
@@ -42,11 +33,9 @@ const state = {
 // Connect to MongoDB using Bluebird promise
 const connect = () => {
     return new Promise((resolve, reject) => {
-        console.log('connecting...');
         try {
             MongoDB.MongoClient.connect(config.uri)
                 .then((db) => {
-                    console.log('connected');
                     state.db = db;
                     state.currCollection =
                         state.db.collection(config.collections[state.currCollectionIndex]);
@@ -82,7 +71,7 @@ const nextCollection = () => {
         return null;
     }
     state.currCollectionIndex += 1;
-    state.currCollection = config.collections[state.currCollectionIndex];
+    state.currCollection = state.db.collection(config.collections[state.currCollectionIndex]);
     return state.currCollection;
 };
 
@@ -99,11 +88,12 @@ const streamData = () => {
 };
 
 // This is the object that would be exported
-const PanoStream = (options) => {
+const stream = (options) => {
     config = options;
-    config.uri = 'mongodb://' + options.username + ':' + options.password + '@' + options.address + ':' + options.port + '/' + options.database;
+    config.uri = 'mongodb://' + options.username + ':' + options.password +
+        '@' + options.address + ':' + options.port + '/' + options.database;
+    if (!config.batchSize) config.batchSize = 5;
 
-    console.log('started object');
     // Implementing stream based on NodeJS Readable Stream
     return new Readable({
         objectMode: true,
@@ -128,5 +118,97 @@ const PanoStream = (options) => {
         }
     });
 };
+
+console.log(stream);
+
+class PanoStream extends Readable {
+    constructor(options) {
+        super(options);
+        this._config = options;
+        this._config.uri = 'mongodb://' + options.username + ':' + options.password +
+            '@' + options.address + ':' + options.port + '/' + options.database;
+        if (!this._config.batchSize) this._config.batchSize = 5;
+
+        this._state = {
+            db: null,
+            currCollection: null,
+            currCollectionIndex: 0,
+            batch: []
+        };
+    }
+    read(size) {
+        this._config.size = size;
+        this._state.batch = [];
+
+        // If connection is established, read batch data from MongoDB
+        if (this._state.db) {
+            this._readFromMongo().then(() => {
+                console.log('NEW DATA: ', this._state.batch);
+                this._streamData();
+            });
+        } else {
+            // Otherwise connect first and then read the batch data
+            this._connect().then(() => {
+                this._readFromMongo().then(() => {
+                    console.log('NEW DATA: ', this._state.batch);
+                    this._streamData();
+                });
+            });
+        }
+    }
+    _connect() {
+        return new Promise((resolve, reject) => {
+            try {
+                MongoDB.MongoClient.connect(config.uri)
+                    .then((db) => {
+                        this._state.db = db;
+                        this._state.currCollection =
+                            this._state.db.collection(this._config.collections[
+                                this._state.currCollectionIndex]);
+                        resolve();
+                    });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    _readFromMongo() {
+        return new Promise((resolve, reject) => {
+            try {
+                if (!this._state.batch.length && this._state.currCollection) {
+                    this._state.currCollection.find({}, { limit: config.batchSize })
+                        .then((results) => {
+                            this._state.batch = results;
+                            resolve();
+                        });
+                } else {
+                    resolve();
+                }
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+    _nextCollection() {
+        if (this._state.currCollectionIndex + 1 === this._config.collections.length) {
+            return null;
+        }
+        this._state.currCollectionIndex += 1;
+        this._state.currCollection =
+            this._state.db.collection(this._config.collections[this._state.currCollectionIndex]);
+        return this._state.currCollection;
+    }
+    _streamData() {
+        if (this._state.batch.length) {
+            this.push(this._state.batch);
+        } else if (this._nextCollection() == null) {
+            this.push(null);
+            this._state.db.close();
+            this._state.db = null;
+            this._state.currCollection = null;
+            this._state.currCollectionIndex = 0;
+        }
+    }
+}
 
 export default PanoStream;

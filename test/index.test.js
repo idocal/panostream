@@ -14,6 +14,10 @@ describe('Importing the module', function () {
     });
 });
 
-describe('Configuration validity', function () {
-
-});
+// describe('Configuration validity', function () {
+//     it('should establish connection to MongoDB', function () {
+//         expect(PanoStream._config.address).to.not.be.null;
+//         console.log(PanoStream);
+//         console.log(stream);
+//     });
+// });
