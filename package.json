@@ -5,8 +5,14 @@
   "main": "./lib/index.js",
   "repository": "git@github.com:idocal/panostream",
   "author": "Ido Calman <calman.ido@gmail.com>",
-  "license": "MIT License",
-  "dependencies": {},
+  "license": "MIT",
+  "dependencies": {
+    "asyncwait": "^1.0.2",
+    "babel-eslint": "^8.0.1",
+    "bluebird": "^3.5.1",
+    "eslint-plugin-async-await": "0.0.0",
+    "mongodb": "^2.2.33"
+  },
   "keywords": [],
   "scripts": {
     "?info": "Display information about the scripts.",
@@ -77,10 +83,10 @@
     }
   },
   "nyc": {
-    "lines": 20,
-    "statements": 20,
-    "functions": 20,
-    "branches": 20,
+    "lines": 0,
+    "statements": 0,
+    "functions": 0,
+    "branches": 0,
     "reporter": [
       "lcov",
       "text-summary"
