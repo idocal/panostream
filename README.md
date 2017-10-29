@@ -13,7 +13,33 @@ npm install
 
 ## Usage
 
+Create a new PanoStream object:
+```
+const options = {
+    address: 'localhost',
+    port: 27017,
+    username: 'user',
+    password: '123456',
+    database: 'streamableDb',
+    collections: ['cars', 'restaurants', 'users']
+};
 
+const MyStream = new PanoStream(options);
+```
+
+When streaming data, the `ondata` event emits and data is streamed as [Buffer](https://nodejs.org/api/buffer.html):
+```
+stream.on('data', (chunk) => {
+    console.log(chunk.toString());
+});
+```
+
+When stream ends, the `onend` event emits:
+```
+stream.on('end', () => {
+    console.log('Ended stream.');
+});
+```
 
 ## Acknowledgements
 

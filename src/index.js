@@ -6,8 +6,9 @@ import { Readable } from 'stream';
 Promise.promisifyAll(MongoDB.MongoClient);
 Promise.promisifyAll(MongoDB.Collection.prototype);
 
-/** The config should be determined by user via options
- Example:
+/**
+ * The config should be determined by user via options
+ * Example:
  {
      address: 'localhost',
      port: 27017,
@@ -16,7 +17,7 @@ Promise.promisifyAll(MongoDB.Collection.prototype);
      database: 'streamableDb',
      batchSize: 5,
      collections: ['cars', 'restaurants', 'users'],
-     uri: 'mongodb://user:123456@localhost:27017/streamableDb'
+     uri: 'mongodb://user:123456@localhost:27017/streamableDb' <-- this is not an input option
  }
  */
 
@@ -32,9 +33,7 @@ class PanoStream extends Readable {
             db: null,
             currCollection: null,
             currCollectionIndex: 0,
-            skip: 0,
-            batch: '',
-            cursor: null
+            cursor: null,
         };
     }
 
@@ -68,29 +67,37 @@ class PanoStream extends Readable {
     }
 
     _readFromMongo() {
+        // Save pointer to stream object
         const stream = this;
         try {
+            // Query state's cursor if exists
             if (!stream._state.cursor) {
-                stream._state.cursor = stream._state.currCollection.find({ id: { $lte: 3 } });
+                // If cursor does not exist, create one using Collection.find()
+                stream._state.cursor = stream._state.currCollection.find({});
 
+                // Cursor is a Readable stream, when data is being streamed, stream it using push()
                 stream._state.cursor.on('data', (chunk) => {
                     if (!stream.push(Buffer.from(JSON.stringify(chunk)))) {
+                        // If stream push failed, pause the cursor
                         stream._state.cursor.pause();
                     }
                 });
 
                 stream._state.cursor.on('end', () => {
-                    console.log('ended collection: ', stream._state.currCollection.s.name);
+                    // Reset cursor to start new collection
                     stream._state.cursor = null;
+
+                    // _nextCollection() returns null when no more collections remain
                     if (stream._nextCollection() === null) {
-                        stream.push(null);
+                        stream.push(null); // emits 'onend' event
                         stream._resetState();
                     } else {
+                        // There still remains a collection to query
                         stream._readFromMongo();
                     }
-                    console.log('read documents: ', stream._state.clread);
                 });
             } else {
+                // Cursor exists, resume if paused
                 stream._state.cursor.resume();
             }
         } catch (error) {
@@ -116,25 +123,5 @@ class PanoStream extends Readable {
         this._state.cursor = null;
     }
 }
-
-// const options = {
-//     address: 'localhost',
-//     port: 27017,
-//     username: 'user',
-//     password: '123456',
-//     database: 'streamableDb',
-//     collections: ['cars', 'restaurants', 'users'],
-//     batchSize: 5
-// };
-//
-// const stream = new PanoStream(options);
-//
-// stream.on('data', function(chunk) {
-//     console.log('REAL STREAM: \n', chunk.toString(), '\n\n');
-// });
-//
-// stream.on('end', function() {
-//     console.log('REAL STREAM ENDED!');
-// });
 
 export default PanoStream;
