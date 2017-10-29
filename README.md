@@ -17,6 +17,4 @@ npm install
 
 ## Acknowledgements
 
-Inspired from [stream-to-mongo-db](https://github.com/AbdullahAli/node-stream-to-mongo-db)
-
 The module is based on [node-module-boilerplate](https://www.npmjs.com/package/node-module-boilerplate)'s boilerplate.
