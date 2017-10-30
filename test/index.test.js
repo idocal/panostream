@@ -29,10 +29,23 @@ describe('Configuration validity', function () {
     it('should receive user\'s configuration', function () {
         expect(stream._config.uri).to.equal('mongodb://user:123456@localhost:27017/streamableDb');
     });
+
+    const initialState = {
+        db: null,
+        currCollection: null,
+        currCollectionIndex: 0,
+        cursor: null,
+    };
+
+    it('should initialize state correctly', function () {
+       expect(stream._state).to.deep.equal(initialState);
+    });
 });
 
 describe('Batch data', function () {
-    stream.on('data', function (chunk) {
-       console.log('STREAMING NOW: ', chunk.toString());
+    it('should read data as Buffer', function () {
+        stream.on('data', function (chunk) {
+           expect(chunk).to.be.instanceof(Buffer);
+        });
     });
 });

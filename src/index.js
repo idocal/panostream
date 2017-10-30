@@ -38,7 +38,7 @@ class PanoStream extends Readable {
     }
 
     _read(size) {
-        this._state.size = size;
+        this._config.size = size;
 
         // If connection is established, read batch data from MongoDB
         if (this._state.db) {
