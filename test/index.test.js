@@ -20,8 +20,7 @@ const options = {
     username: 'user',
     password: '123456',
     database: 'streamableDb',
-    batchSize: 5,
-    collections: ['Cars', 'Restaurants', 'Users']
+    collections: ['cars', 'restaurants', 'users']
 };
 
 const stream = new PanoStream(options);
@@ -29,5 +28,11 @@ const stream = new PanoStream(options);
 describe('Configuration validity', function () {
     it('should receive user\'s configuration', function () {
         expect(stream._config.uri).to.equal('mongodb://user:123456@localhost:27017/streamableDb');
+    });
+});
+
+describe('Batch data', function () {
+    stream.on('data', function (chunk) {
+       console.log('STREAMING NOW: ', chunk.toString());
     });
 });
