@@ -1,6 +1,6 @@
-# PanoStream
+# PanoStream [![Build Status](https://travis-ci.org/idocal/panostream.svg?branch=master)](https://travis-ci.org/idocal/panostream)
 
-A npm module that queries MongoDB and returns a stream.
+A Node.js module that queries MongoDB and returns a stream.
 This module implements Node.js [Readable Stream](https://nodejs.org/api/stream.html) and queries specified collections from MongoDB.
 The data is streamed with a specified fixed-size batch and stops reading from Mongo when all collection's data is read.
 
